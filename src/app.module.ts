@@ -3,6 +3,9 @@ import { ConfigModule } from '@config/config.module';
 import { DatabaseModule } from '@infrastructure/database/database.module';
 import { HealthModule } from '@modules/health/health.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { UsersModule } from '@modules/users/users.module';
+import { OwnersModule } from '@modules/owners/owners.module';
+import { BanquetsModule } from '@modules/banquets/banquets.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 
@@ -30,6 +33,9 @@ import { ConfigService } from '@nestjs/config';
         // Feature modules
         AuthModule,
         HealthModule,
+        UsersModule,
+        OwnersModule,
+        BanquetsModule,
     ],
 })
 export class AppModule { }

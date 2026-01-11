@@ -104,3 +104,20 @@ BanquetSchema.virtual('owner', {
     foreignField: '_id',
     justOne: true,
 });
+
+// ==================================
+// INDEXES FOR SEARCH OPTIMIZATION
+// ==================================
+
+// Text index for name and description (full-text search)
+BanquetSchema.index({ name: 'text', description: 'text' });
+
+// Compound indexes for common queries
+BanquetSchema.index({ city: 1, status: 1 }); // Filter by city and status
+BanquetSchema.index({ ownerId: 1, status: 1 }); // Owner's banquets by status
+BanquetSchema.index({ capacity: 1 }); // Filter by capacity
+BanquetSchema.index({ status: 1, createdAt: -1 }); // Active banquets sorted by date
+
+// Geospatial index for location-based queries (nearby banquets)
+// Note: Requires latitude and longitude to be set
+BanquetSchema.index({ latitude: 1, longitude: 1 });

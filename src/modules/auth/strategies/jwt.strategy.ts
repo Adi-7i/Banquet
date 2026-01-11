@@ -36,7 +36,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
             throw new UnauthorizedException('Invalid user or inactive account');
         }
 
-        // Attach user to request object
-        return user;
+        // Return structured object with sub for consistency
+        // This allows controllers to use user.sub (userId string)
+        return {
+            sub: user._id.toHexString(),
+            email: user.email,
+            role: user.role,
+            status: user.status,
+        };
     }
 }
+
