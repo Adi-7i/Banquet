@@ -1,0 +1,181 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  ADMIN
+  OWNER
+  CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum BanquetStatus {
+  DRAFT
+  PUBLISHED
+  UNAVAILABLE
+  DELETED
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // hashed with bcrypt
+  role      UserRole
+  status    UserStatus @default(ACTIVE)
+
+  // Relationships
+  ownerProfile    OwnerProfile?
+  customerProfile CustomerProfile?
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // soft delete
+  createdBy String?
+  updatedBy String?
+
+  // Indexes for performance
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// ============================================
+// OWNER PROFILE
+// ============================================
+
+model OwnerProfile {
+  id           String  @id @default(uuid())
+  userId       String  @unique
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Business information
+  businessName String
+  contactNumber String
+  address      String?
+  city         String?
+  state        String?
+  pincode      String?
+  gstNumber    String?  @unique
+  
+  // Additional details
+  description  String?
+  website      String?
+  
+  // Relationships
+  banquets     Banquet[]
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("owner_profiles")
+}
+
+// ============================================
+// CUSTOMER PROFILE
+// ============================================
+
+model CustomerProfile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Personal information
+  firstName   String
+  lastName    String
+  phoneNumber String
+  address     String?
+  city        String?
+  state       String?
+  pincode     String?
+  
+  // Preferences (JSON field for flexible data)
+  preferences Json?
+
+  // Audit fields
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("customer_profiles")
+}
+
+// ============================================
+// BANQUET
+// ============================================
+
+model Banquet {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  
+  // Location
+  address     String
+  city        String
+  state       String
+  pincode     String
+  latitude    Float?
+  longitude   Float?
+  
+  // Capacity and pricing
+  capacity    Int
+  pricing     Json          // Flexible pricing structure
+  
+  // Features and amenities (JSON for flexibility)
+  amenities   Json?
+  images      String[]      // Array of image URLs
+  
+  // Status
+  status      BanquetStatus @default(DRAFT)
+  
+  // Relationships
+  ownerId     String
+  owner       OwnerProfile  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Audit fields
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([city])
+  @@index([deletedAt])
+  @@map("banquets")
+}
