@@ -1,0 +1,38 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "module": "commonjs",
+        "types": [
+            "jest",
+            "node"
+        ],
+        "baseUrl": "../..",
+        "paths": {
+            "@/*": [
+                "src/*"
+            ],
+            "@common/*": [
+                "src/common/*"
+            ],
+            "@config/*": [
+                "src/config/*"
+            ],
+            "@domain/*": [
+                "src/domain/*"
+            ],
+            "@application/*": [
+                "src/application/*"
+            ],
+            "@infrastructure/*": [
+                "src/infrastructure/*"
+            ],
+            "@modules/*": [
+                "src/modules/*"
+            ]
+        }
+    },
+    "include": [
+        "./**/*.ts",
+        "../../src/**/*.ts"
+    ]
+}

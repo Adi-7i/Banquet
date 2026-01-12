@@ -1,11 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@config/config.module';
 import { DatabaseModule } from '@infrastructure/database/database.module';
+import { LoggerModule } from '@common/logger/logger.module';
+import { AuditModule } from '@common/audit/audit.module';
+import { RequestIdMiddleware } from '@common/middleware/request-id.middleware';
 import { HealthModule } from '@modules/health/health.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { UsersModule } from '@modules/users/users.module';
 import { OwnersModule } from '@modules/owners/owners.module';
 import { BanquetsModule } from '@modules/banquets/banquets.module';
+import { SearchModule } from '@modules/search/search.module';
+import { RedisModule } from '@infrastructure/cache/redis.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 
@@ -18,6 +23,9 @@ import { ConfigService } from '@nestjs/config';
         // Global modules
         ConfigModule,
         DatabaseModule,
+        LoggerModule,
+        AuditModule,
+        RedisModule,
 
         // Security - Rate limiting
         ThrottlerModule.forRootAsync({
@@ -36,7 +44,16 @@ import { ConfigService } from '@nestjs/config';
         UsersModule,
         OwnersModule,
         BanquetsModule,
+        SearchModule,
     ],
 })
-export class AppModule { }
-
+export class AppModule implements NestModule {
+    /**
+     * Configure middleware for all routes
+     */
+    configure(consumer: MiddlewareConsumer): void {
+        consumer
+            .apply(RequestIdMiddleware)
+            .forRoutes('*');
+    }
+}

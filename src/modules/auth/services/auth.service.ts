@@ -1,9 +1,6 @@
 import {
     Injectable,
     Logger,
-    UnauthorizedException,
-    BadRequestException,
-    ConflictException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -13,6 +10,13 @@ import { User, UserDocument, UserRole, UserStatus } from '@infrastructure/databa
 import { OwnerProfile, OwnerProfileDocument } from '@infrastructure/database/schemas/owner-profile.schema';
 import { CustomerProfile, CustomerProfileDocument } from '@infrastructure/database/schemas/customer-profile.schema';
 import { LoginAttempt, LoginAttemptDocument } from '@infrastructure/database/schemas/login-attempt.schema';
+import {
+    AuthenticationError,
+    ValidationError,
+    ConflictError,
+    RateLimitError,
+} from '@common/errors';
+import { ErrorCodes } from '@common/errors';
 
 export interface RegisterInput {
     email: string;
@@ -62,17 +66,21 @@ export class AuthService {
         // Validate password strength
         const passwordValidation = this.passwordService.validatePasswordStrength(password);
         if (!passwordValidation.isValid) {
-            throw new BadRequestException({
-                message: 'Password does not meet security requirements',
-                errors: passwordValidation.errors,
-            });
+            throw new ValidationError(
+                'Password does not meet security requirements',
+                passwordValidation.errors?.map(e => ({ field: 'password', message: e })),
+                ErrorCodes.USER_INVALID_PASSWORD,
+            );
         }
 
         // Check if user already exists
         const existingUser = await this.userModel.findOne({ email }).exec();
 
         if (existingUser) {
-            throw new ConflictException('User with this email already exists');
+            throw new ConflictError(
+                'User with this email already exists',
+                ErrorCodes.USER_EMAIL_EXISTS,
+            );
         }
 
         // Hash password
@@ -120,7 +128,10 @@ export class AuthService {
         if (!user) {
             // Record failed attempt
             await this.recordLoginAttempt(email, ipAddress || 'unknown', userAgent || 'unknown', false);
-            throw new UnauthorizedException('Invalid credentials');
+            throw new AuthenticationError(
+                'Invalid credentials',
+                ErrorCodes.AUTH_INVALID_CREDENTIALS,
+            );
         }
 
         // Verify password
@@ -132,12 +143,18 @@ export class AuthService {
         if (!isPasswordValid) {
             // Record failed attempt
             await this.recordLoginAttempt(email, ipAddress || 'unknown', userAgent || 'unknown', false);
-            throw new UnauthorizedException('Invalid credentials');
+            throw new AuthenticationError(
+                'Invalid credentials',
+                ErrorCodes.AUTH_INVALID_CREDENTIALS,
+            );
         }
 
         // Check user status
         if (user.status !== UserStatus.ACTIVE) {
-            throw new UnauthorizedException(`Account is ${user.status.toLowerCase()}`);
+            throw new AuthenticationError(
+                `Account is ${user.status.toLowerCase()}`,
+                ErrorCodes.USER_DEACTIVATED,
+            );
         }
 
         // Record successful attempt
@@ -189,7 +206,10 @@ export class AuthService {
         const user = await this.userModel.findById(userId).exec();
 
         if (!user || user.status !== UserStatus.ACTIVE) {
-            throw new UnauthorizedException('Invalid user');
+            throw new AuthenticationError(
+                'Invalid user',
+                ErrorCodes.AUTH_REFRESH_TOKEN_INVALID,
+            );
         }
 
         // Generate new access token
@@ -254,8 +274,10 @@ export class AuthService {
 
         if (failedAttempts >= this.loginAttemptLimit) {
             this.logger.warn(`Too many login attempts for ${email} from ${ipAddress}`);
-            throw new UnauthorizedException(
+            throw new RateLimitError(
                 'Too many failed login attempts. Please try again later.',
+                ErrorCodes.AUTH_TOO_MANY_ATTEMPTS,
+                { retryAfter: this.loginAttemptWindow },
             );
         }
     }

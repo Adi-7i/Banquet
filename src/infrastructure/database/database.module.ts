@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseService } from './database.service';
+import { TransactionManager } from './transaction.manager';
 
 // Import all schemas
 import { User, UserSchema } from './schemas/user.schema';
@@ -38,7 +39,7 @@ import { LoginAttempt, LoginAttemptSchema } from './schemas/login-attempt.schema
             { name: LoginAttempt.name, schema: LoginAttemptSchema },
         ]),
     ],
-    providers: [DatabaseService],
-    exports: [MongooseModule, DatabaseService],
+    providers: [DatabaseService, TransactionManager],
+    exports: [MongooseModule, DatabaseService, TransactionManager],
 })
 export class DatabaseModule { }

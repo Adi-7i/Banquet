@@ -118,6 +118,13 @@ BanquetSchema.index({ ownerId: 1, status: 1 }); // Owner's banquets by status
 BanquetSchema.index({ capacity: 1 }); // Filter by capacity
 BanquetSchema.index({ status: 1, createdAt: -1 }); // Active banquets sorted by date
 
-// Geospatial index for location-based queries (nearby banquets)
-// Note: Requires latitude and longitude to be set
+// Price index for sorting/filtering
+BanquetSchema.index({ 'pricing.perPlate': 1, status: 1 });
+
+// Geospatial index for location-based search
+// Note: This requires GeoJSON format
+BanquetSchema.index({ location: '2dsphere' });
+
+// Fallback: Simple lat/lng indexes for distance calculations
 BanquetSchema.index({ latitude: 1, longitude: 1 });
+

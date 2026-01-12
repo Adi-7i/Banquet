@@ -1,10 +1,6 @@
 import {
     Injectable,
     Logger,
-    NotFoundException,
-    ConflictException,
-    ForbiddenException,
-    BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -17,6 +13,13 @@ import { OwnerProfile, OwnerProfileDocument } from '@infrastructure/database/sch
 import { CustomerProfile, CustomerProfileDocument } from '@infrastructure/database/schemas/customer-profile.schema';
 import { UserRole } from '@infrastructure/database/schemas/user.schema';
 import { PasswordService } from '@modules/auth/services/password.service';
+import {
+    NotFoundError,
+    AuthorizationError,
+    ConflictError,
+    ValidationError,
+} from '@common/errors';
+import { ErrorCodes } from '@common/errors';
 
 /**
  * Users Service
@@ -40,7 +43,10 @@ export class UsersService {
         const user = await this.usersRepository.findById(userId);
 
         if (!user) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundError(
+                'User not found',
+                ErrorCodes.USER_NOT_FOUND,
+            );
         }
 
         // Fetch profile based on role
@@ -73,20 +79,29 @@ export class UsersService {
     ): Promise<UserResponseDto> {
         // Authorization check: only admins can update other users
         if (userId !== requestingUserId && requestingUserRole !== UserRole.ADMIN) {
-            throw new ForbiddenException('You can only update your own profile');
+            throw new AuthorizationError(
+                'You can only update your own profile',
+                ErrorCodes.AUTHZ_INSUFFICIENT_PERMISSIONS,
+            );
         }
 
         // Check if user exists
         const user = await this.usersRepository.findById(userId);
         if (!user) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundError(
+                'User not found',
+                ErrorCodes.USER_NOT_FOUND,
+            );
         }
 
         // Check if email is being changed and if it's available
         if (data.email && data.email !== user.email) {
             const emailExists = await this.usersRepository.emailExists(data.email, userId);
             if (emailExists) {
-                throw new ConflictException('Email already in use');
+                throw new ConflictError(
+                    'Email already in use',
+                    ErrorCodes.USER_EMAIL_EXISTS,
+                );
             }
         }
 
@@ -97,7 +112,10 @@ export class UsersService {
         } as any);
 
         if (!updatedUser) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundError(
+                'User not found',
+                ErrorCodes.USER_NOT_FOUND,
+            );
         }
 
         this.logger.log(`User ${userId} updated by ${requestingUserId}`);
@@ -115,7 +133,10 @@ export class UsersService {
         const user = await this.usersRepository.findById(userId);
 
         if (!user) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundError(
+                'User not found',
+                ErrorCodes.USER_NOT_FOUND,
+            );
         }
 
         // Verify current password
@@ -125,16 +146,21 @@ export class UsersService {
         );
 
         if (!isPasswordValid) {
-            throw new BadRequestException('Current password is incorrect');
+            throw new ValidationError(
+                'Current password is incorrect',
+                [{ field: 'currentPassword', message: 'Password is incorrect' }],
+                ErrorCodes.USER_PASSWORD_MISMATCH,
+            );
         }
 
         // Validate new password strength
         const passwordValidation = this.passwordService.validatePasswordStrength(data.newPassword);
         if (!passwordValidation.isValid) {
-            throw new BadRequestException({
-                message: 'New password does not meet security requirements',
-                errors: passwordValidation.errors,
-            });
+            throw new ValidationError(
+                'New password does not meet security requirements',
+                passwordValidation.errors?.map(e => ({ field: 'newPassword', message: e })),
+                ErrorCodes.USER_INVALID_PASSWORD,
+            );
         }
 
         // Hash and update new password
@@ -192,17 +218,26 @@ export class UsersService {
     ): Promise<{ message: string }> {
         // Business rule: users cannot deactivate themselves
         if (userId === requestingUserId) {
-            throw new ForbiddenException('You cannot deactivate your own account');
+            throw new AuthorizationError(
+                'You cannot deactivate your own account',
+                ErrorCodes.AUTHZ_FORBIDDEN,
+            );
         }
 
         // Only admins can deactivate users
         if (requestingUserRole !== UserRole.ADMIN) {
-            throw new ForbiddenException('Only admins can deactivate users');
+            throw new AuthorizationError(
+                'Only admins can deactivate users',
+                ErrorCodes.AUTHZ_ROLE_REQUIRED,
+            );
         }
 
         const user = await this.usersRepository.findById(userId);
         if (!user) {
-            throw new NotFoundException('User not found');
+            throw new NotFoundError(
+                'User not found',
+                ErrorCodes.USER_NOT_FOUND,
+            );
         }
 
         await this.usersRepository.softDelete(userId, requestingUserId);
