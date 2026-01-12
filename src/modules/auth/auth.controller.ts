@@ -50,13 +50,13 @@ export class AuthController {
     @ApiOperation({ summary: 'Register a new user' })
     @ApiResponse({
         status: 201,
-        description: 'User successfully registered',
-        type: UserResponseDto,
+        description: 'User successfully registered with JWT tokens',
+        type: AuthResponseDto,
     })
     @ApiResponse({ status: 400, description: 'Invalid input data' })
     @ApiResponse({ status: 409, description: 'User already exists' })
     async register(@Body() registerDto: RegisterDto) {
-        const user = await this.authService.register({
+        const result = await this.authService.register({
             email: registerDto.email,
             password: registerDto.password,
             role: registerDto.role,
@@ -66,14 +66,12 @@ export class AuthController {
             },
         });
 
-        this.logger.log(`User registered: ${user.email}`);
+        this.logger.log(`User registered: ${result.user.email}`);
 
-        // Remove password from response
-        const { password, ...userWithoutPassword } = user;
         return {
             success: true,
             message: 'User registered successfully',
-            data: userWithoutPassword,
+            data: result,
         };
     }
 

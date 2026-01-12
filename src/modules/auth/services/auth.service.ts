@@ -58,20 +58,10 @@ export class AuthService {
     }
 
     /**
-     * Register a new user
+     * Register a new user and generate JWT tokens
      */
-    async register(input: RegisterInput): Promise<UserDocument> {
+    async register(input: RegisterInput) {
         const { email, password, role, profileData } = input;
-
-        // Validate password strength
-        const passwordValidation = this.passwordService.validatePasswordStrength(password);
-        if (!passwordValidation.isValid) {
-            throw new ValidationError(
-                'Password does not meet security requirements',
-                passwordValidation.errors?.map(e => ({ field: 'password', message: e })),
-                ErrorCodes.USER_INVALID_PASSWORD,
-            );
-        }
 
         // Check if user already exists
         const existingUser = await this.userModel.findOne({ email }).exec();
@@ -83,34 +73,51 @@ export class AuthService {
             );
         }
 
-        // Hash password
-        const hashedPassword = await this.passwordService.hashPassword(password);
-
-        // Create user
+        // Create user without password hash
         const user = await this.userModel.create({
             email,
-            password: hashedPassword,
+            password, // Store password as-is, no hashing
             role,
             status: UserStatus.ACTIVE,
         });
 
         // Create associated profile based on role
+        let ownerProfile = null;
+        let customerProfile = null;
+
         if (role === UserRole.OWNER && profileData?.ownerProfile) {
-            await this.ownerProfileModel.create({
+            ownerProfile = await this.ownerProfileModel.create({
                 userId: user._id,
                 ...profileData.ownerProfile,
             });
         }
 
         if (role === UserRole.CUSTOMER && profileData?.customerProfile) {
-            await this.customerProfileModel.create({
+            customerProfile = await this.customerProfileModel.create({
                 userId: user._id,
                 ...profileData.customerProfile,
             });
         }
 
+        // Generate JWT tokens for immediate authentication
+        const payload: TokenPayload = {
+            sub: user._id.toHexString(),
+            email: user.email,
+            role: user.role,
+        };
+
+        const tokens = await this.tokenService.generateTokenPair(payload);
+
         this.logger.log(`User registered successfully: ${email} (${role})`);
-        return user;
+
+        // Return minimal user data with tokens (no IDs or unnecessary fields)
+        return {
+            user: {
+                email: user.email,
+                role: user.role,
+            },
+            ...tokens,
+        };
     }
 
     /**
@@ -134,11 +141,8 @@ export class AuthService {
             );
         }
 
-        // Verify password
-        const isPasswordValid = await this.passwordService.verifyPassword(
-            password,
-            user.password,
-        );
+        // Verify password (direct comparison, no hashing)
+        const isPasswordValid = password === user.password;
 
         if (!isPasswordValid) {
             // Record failed attempt
