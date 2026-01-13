@@ -3,7 +3,9 @@ import { ConfigModule } from '@config/config.module';
 import { DatabaseModule } from '@infrastructure/database/database.module';
 import { LoggerModule } from '@common/logger/logger.module';
 import { AuditModule } from '@common/audit/audit.module';
+import { HardeningModule } from '@common/hardening/hardening.module';
 import { RequestIdMiddleware } from '@common/middleware/request-id.middleware';
+import { RequestValidationMiddleware } from '@common/middleware/request-validation.middleware';
 import { HealthModule } from '@modules/health/health.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { UsersModule } from '@modules/users/users.module';
@@ -23,6 +25,7 @@ import { ConfigService } from '@nestjs/config';
 /**
  * Root Application Module
  * Imports all core modules and feature modules
+ * Production hardened with security middleware and graceful shutdown
  */
 @Module({
     imports: [
@@ -31,6 +34,7 @@ import { ConfigService } from '@nestjs/config';
         DatabaseModule,
         LoggerModule,
         AuditModule,
+        HardeningModule,
         RedisModule,
         // QueueModule, // Requires Redis - uncomment when Redis available
 
@@ -39,7 +43,7 @@ import { ConfigService } from '@nestjs/config';
             inject: [ConfigService],
             useFactory: (config: ConfigService) => ({
                 throttlers: [{
-                    ttl: (config.get<number>('throttle.ttl') || 60) * 1000, // Convert to ms
+                    ttl: (config.get<number>('throttle.ttl') || 60) * 1000,
                     limit: config.get<number>('throttle.limit') || 100,
                 }],
             }),
@@ -64,7 +68,7 @@ export class AppModule implements NestModule {
      */
     configure(consumer: MiddlewareConsumer): void {
         consumer
-            .apply(RequestIdMiddleware)
+            .apply(RequestIdMiddleware, RequestValidationMiddleware)
             .forRoutes('*');
     }
 }
