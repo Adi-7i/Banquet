@@ -55,8 +55,15 @@ export function ReviewList({ banquetId }: ReviewListProps) {
                     <CardContent>
                         <p className="text-sm text-muted-foreground">{review.content}</p>
                     </CardContent>
+                    {/* Only show Reply button if user is owner and no reply exists - Simplified check for MVP */}
+                    <div className="px-6 pb-4">
+                        <ReplyDialog reviewId={review._id} />
+                    </div>
                 </Card>
             ))}
         </div>
     );
 }
+
+// Ensure ReplyDialog is imported
+import { ReplyDialog } from "./reply-dialog";

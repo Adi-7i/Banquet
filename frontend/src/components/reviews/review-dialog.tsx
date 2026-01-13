@@ -24,11 +24,15 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateReview } from "@/hooks/useReviews";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/image-upload";
+
 
 const reviewSchema = z.object({
     rating: z.number().min(1, "Please select a rating").max(5),
     content: z.string().min(5, "Review must be at least 5 characters"),
+    photos: z.array(z.string()).optional(),
 });
+
 
 interface ReviewDialogProps {
     banquetId: string;
@@ -46,7 +50,9 @@ export function ReviewDialog({ banquetId, banquetName, trigger, onSuccess }: Rev
         defaultValues: {
             rating: 0,
             content: "",
+            photos: [],
         },
+
     });
 
     function onSubmit(values: z.infer<typeof reviewSchema>) {
@@ -55,7 +61,9 @@ export function ReviewDialog({ banquetId, banquetName, trigger, onSuccess }: Rev
                 banquetId,
                 rating: values.rating,
                 content: values.content,
+                photos: values.photos?.map(url => ({ url, caption: "" })) || [],
             },
+
             {
                 onSuccess: () => {
                     toast.success("Review submitted successfully");
@@ -122,6 +130,23 @@ export function ReviewDialog({ banquetId, banquetName, trigger, onSuccess }: Rev
                                 </FormItem>
                             )}
                         />
+                        <FormField
+                            control={form.control}
+                            name="photos"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormControl>
+                                        <ImageUpload
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            maxFiles={3}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
                         <Button type="submit" className="w-full" disabled={isPending}>
                             {isPending ? "Submitting..." : "Submit Review"}
                         </Button>

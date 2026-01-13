@@ -51,10 +51,12 @@ export function AppSidebar() {
     ];
 
     const adminItems = [
-        { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
-        { title: "Users", url: "/dashboard/users", icon: Users },
-        { title: "Moderation", url: "/dashboard/moderation", icon: ShieldCheck },
-        { title: "Platform Stats", url: "/dashboard/stats", icon: LayoutDashboard },
+        { title: "Overview", url: "/dashboard/admin", icon: LayoutDashboard },
+        { title: "Users", url: "/dashboard/admin/users", icon: Users },
+        { title: "Banquets", url: "/dashboard/admin/banquets", icon: Building2 },
+        { title: "Reviews", url: "/dashboard/admin/reviews", icon: ShieldCheck },
+        { title: "Tickets", url: "/dashboard/admin/tickets", icon: Star }, // Using Star temporarily, maybe find better icon
+        { title: "Analytics", url: "/dashboard/admin/analytics", icon: LayoutDashboard },
     ];
 
     let items = customerItems;

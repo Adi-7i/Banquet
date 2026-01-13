@@ -19,6 +19,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
+import { ImageUpload } from "@/components/image-upload";
+
 
 const banquetSchema = z.object({
     name: z.string().min(5, "Name must be at least 5 characters"),
@@ -30,7 +32,9 @@ const banquetSchema = z.object({
     amenities: z.array(z.string()).refine((value) => value.length > 0, {
         message: "Select at least one amenity",
     }),
+    images: z.array(z.string()).min(1, "Upload at least one image"),
 });
+
 
 const AMENITIES_LIST = [
     "AC", "Parking", "Catering", "Decor", "Alcohol Allowed", "DJ", "Valet", "Bridal Room", "Wifi", "Power Backup"
@@ -57,7 +61,9 @@ export function BanquetForm({ defaultValues, onSubmit, isSubmitting, buttonText,
             capacity: 100,
             pricePerPlate: 500,
             amenities: [],
+            images: [],
             ...defaultValues,
+
         },
     });
 
@@ -98,6 +104,28 @@ export function BanquetForm({ defaultValues, onSubmit, isSubmitting, buttonText,
                                 </FormItem>
                             )}
                         />
+
+                        <FormField
+                            control={form.control}
+                            name="images"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Venue Images</FormLabel>
+                                    <FormControl>
+                                        <ImageUpload
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            maxFiles={5}
+                                        />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Upload up to 5 high-quality images of your venue.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField

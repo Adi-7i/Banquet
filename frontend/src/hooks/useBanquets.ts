@@ -34,28 +34,55 @@ export interface UpdateBanquetDto extends Partial<CreateBanquetDto> {
 
 // Fetch Functions
 async function fetchMyBanquets(): Promise<Banquet[]> {
-    const { data } = await api.get("/banquets/my");
-    return data.data;
+    try {
+        const { data } = await api.get("/banquets/my");
+        // Ensure we return an array even if the response structure is unexpected
+        return data?.data || data || [];
+    } catch (error) {
+        console.error("Error fetching banquets:", error);
+        // Return empty array instead of undefined to prevent React Query error
+        return [];
+    }
 }
 
 async function fetchBanquetById(id: string): Promise<Banquet> {
-    const { data } = await api.get(`/banquets/${id}`);
-    return data.data;
+    try {
+        const { data } = await api.get(`/banquets/${id}`);
+        return data?.data || data;
+    } catch (error) {
+        console.error("Error fetching banquet:", error);
+        throw error; // Re-throw to let React Query handle the error state
+    }
 }
 
 async function createBanquet(data: CreateBanquetDto) {
-    const { data: response } = await api.post("/banquets", data);
-    return response.data;
+    try {
+        const { data: response } = await api.post("/banquets", data);
+        return response?.data || response;
+    } catch (error) {
+        console.error("Error creating banquet:", error);
+        throw error;
+    }
 }
 
 async function updateBanquet({ id, data }: { id: string; data: UpdateBanquetDto }) {
-    const { data: response } = await api.patch(`/banquets/${id}`, data);
-    return response.data;
+    try {
+        const { data: response } = await api.patch(`/banquets/${id}`, data);
+        return response?.data || response;
+    } catch (error) {
+        console.error("Error updating banquet:", error);
+        throw error;
+    }
 }
 
 async function deleteBanquet(id: string) {
-    const { data: response } = await api.delete(`/banquets/${id}`);
-    return response.data;
+    try {
+        const { data: response } = await api.delete(`/banquets/${id}`);
+        return response?.data || response;
+    } catch (error) {
+        console.error("Error deleting banquet:", error);
+        throw error;
+    }
 }
 
 // Hooks

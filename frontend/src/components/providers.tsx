@@ -3,7 +3,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
 
+import { useEventTracker } from "@/hooks/useEventTracker";
+
 export default function Providers({ children }: { children: ReactNode }) {
+    useEventTracker();
     const [queryClient] = useState(
         () =>
             new QueryClient({

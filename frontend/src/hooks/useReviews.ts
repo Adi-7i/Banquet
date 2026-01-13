@@ -76,3 +76,24 @@ export function useCreateReview() {
         },
     });
 }
+// ... existing code ...
+
+async function replyToReview({ id, content }: { id: string; content: string }) {
+    const { data } = await api.post(`/reviews/${id}/reply`, { content });
+    return data.data;
+}
+
+export function useReplyToReview() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: replyToReview,
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["reviews"] }); // Invalidate all review queries
+            toast.success("Reply submitted successfully!");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to submit reply");
+        },
+    });
+}

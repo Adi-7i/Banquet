@@ -1,5 +1,7 @@
 "use client";
 
+import { redirect } from "next/navigation";
+
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -91,18 +93,11 @@ export default function DashboardPage() {
         );
     }
 
-    // Admin View
-    return (
-        <div className="flex flex-1 flex-col gap-4 p-4">
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-            <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="text-2xl font-bold">1,234</div>
-                        <p className="text-xs text-muted-foreground">Total Users</p>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    );
+    // Admin View - Redirect to specific admin dashboard
+    if (user.role === "ADMIN") {
+        redirect("/dashboard/admin");
+    }
+
+    return null;
 }
+
