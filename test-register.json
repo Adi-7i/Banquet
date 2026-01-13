@@ -1,5 +1,12 @@
 {
-    "email": "testbooking@demo.com",
-    "password": "Test@123456",
-    "role": "CUSTOMER"
+    "email": "owner@royalbanquet.com",
+    "password": "owner123",
+    "role": "OWNER",
+    "ownerProfile": {
+        "businessName": "Royal Banquet Hall",
+        "contactNumber": "+919876543210",
+        "description": "Luxury banquet hall for weddings and events in the heart of Mumbai",
+        "city": "Mumbai",
+        "address": "123 Main Street, Andheri West, Mumbai, Maharashtra 400053"
+    }
 }

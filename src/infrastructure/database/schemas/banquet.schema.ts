@@ -8,7 +8,9 @@ import { softDeletePlugin, auditFieldsPlugin, SoftDeleteDocument } from './base.
 
 export enum BanquetStatus {
     DRAFT = 'DRAFT',
+    PENDING = 'PENDING',
     PUBLISHED = 'PUBLISHED',
+    REJECTED = 'REJECTED',
     UNAVAILABLE = 'UNAVAILABLE',
     DELETED = 'DELETED',
 }
