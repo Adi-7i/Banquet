@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 export interface Review {
     _id: string;
@@ -9,8 +10,15 @@ export interface Review {
         lastName: string;
     };
     banquetId: string;
+    banquet?: { // Added for My Reviews page
+        _id: string;
+        name: string;
+        primaryImage: string;
+    };
     rating: number;
+    title?: string;
     content: string;
+    photos?: { url: string; caption?: string }[];
     createdAt: string;
 }
 
@@ -18,31 +26,18 @@ export interface CreateReviewDto {
     banquetId: string;
     rating: number;
     content: string;
+    title?: string;
+    photos?: { url: string; caption?: string }[];
 }
 
-async function fetchReviews(banquetId: string) {
-    // const { data } = await api.get(`/reviews?banquetId=${banquetId}`);
-    // return data.data;
+async function fetchBanquetReviews(banquetId: string) {
+    const { data } = await api.get(`/reviews/banquet/${banquetId}`);
+    return data.data; // Assuming backend returns { data: Review[], meta: ... } or just data array
+}
 
-    // Mock Data
-    return [
-        {
-            _id: "r1",
-            user: { _id: "u1", firstName: "Alice", lastName: "Smith" },
-            banquetId: banquetId,
-            rating: 5,
-            content: "Amazing venue! Had a great time.",
-            createdAt: new Date().toISOString(),
-        },
-        {
-            _id: "r2",
-            user: { _id: "u2", firstName: "Bob", lastName: "Jones" },
-            banquetId: banquetId,
-            rating: 4,
-            content: "Good food, but parking was tight.",
-            createdAt: new Date(Date.now() - 86400000).toISOString(),
-        }
-    ] as Review[];
+async function fetchMyReviews() {
+    const { data } = await api.get("/reviews/my");
+    return data.data;
 }
 
 async function createReview(data: CreateReviewDto) {
@@ -52,9 +47,16 @@ async function createReview(data: CreateReviewDto) {
 
 export function useReviews(banquetId: string) {
     return useQuery({
-        queryKey: ["reviews", banquetId],
-        queryFn: () => fetchReviews(banquetId),
+        queryKey: ["reviews", "banquet", banquetId],
+        queryFn: () => fetchBanquetReviews(banquetId),
         enabled: !!banquetId,
+    });
+}
+
+export function useMyReviews() {
+    return useQuery({
+        queryKey: ["reviews", "my"],
+        queryFn: fetchMyReviews,
     });
 }
 
@@ -64,9 +66,13 @@ export function useCreateReview() {
     return useMutation({
         mutationFn: createReview,
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["reviews", variables.banquetId] });
-            // Also invalidate bookings to update status if needed
-            queryClient.invalidateQueries({ queryKey: ["myBookings"] });
+            queryClient.invalidateQueries({ queryKey: ["reviews", "banquet", variables.banquetId] });
+            queryClient.invalidateQueries({ queryKey: ["reviews", "my"] });
+            queryClient.invalidateQueries({ queryKey: ["myBookings"] }); // Update booking status if connected
+            toast.success("Review submitted successfully!");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to submit review");
         },
     });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useBookings } from "@/hooks/useBookings";
+import { useBookings, Booking } from "@/hooks/useBookings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,7 +32,7 @@ export default function BookingsPage() {
                         No bookings found.
                     </div>
                 ) : (
-                    bookings?.map((booking) => (
+                    bookings?.map((booking: Booking) => (
                         <Card key={booking._id}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-base font-semibold">

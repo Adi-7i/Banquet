@@ -1,6 +1,6 @@
 "use client";
 
-import { useMyBanquets } from "@/hooks/useBanquets";
+import { useMyBanquets, useDeleteBanquet, Banquet } from "@/hooks/useBanquets";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,7 @@ export default function BanquetsPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {banquets?.map((banquet) => (
+                {banquets?.map((banquet: Banquet) => (
                     <Card key={banquet._id} className="overflow-hidden">
                         <CardHeader className="pb-4">
                             <div className="flex justify-between items-start">
@@ -53,10 +53,14 @@ export default function BanquetsPage() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link href={`/dashboard/banquets/${banquet._id}/edit`}>Edit</Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link href={`/banquets/${banquet._id}`}>View Details</Link>
+                                        </DropdownMenuItem>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                        <DeleteBanquetItem banquetId={banquet._id} />
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
@@ -88,5 +92,24 @@ export default function BanquetsPage() {
                 ))}
             </div>
         </div>
+    );
+}
+
+function DeleteBanquetItem({ banquetId }: { banquetId: string }) {
+    const { mutate: deleteBanquet, isPending } = useDeleteBanquet();
+
+    return (
+        <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            disabled={isPending}
+            onClick={(e) => {
+                e.preventDefault();
+                if (confirm("Are you sure you want to delete this banquet?")) {
+                    deleteBanquet(banquetId);
+                }
+            }}
+        >
+            {isPending ? "Deleting..." : "Delete"}
+        </DropdownMenuItem>
     );
 }

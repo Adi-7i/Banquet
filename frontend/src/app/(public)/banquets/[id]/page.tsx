@@ -89,7 +89,7 @@ export default function BanquetDetailsPage() {
                     {/* Image Carousel */}
                     <Carousel className="w-full">
                         <CarouselContent>
-                            {banquet.images.map((img: string, index: number) => (
+                            {banquet?.images?.map((img: string, index: number) => (
                                 <CarouselItem key={index}>
                                     <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted">
                                         <img src={img} alt={`View ${index + 1}`} className="w-full h-full object-cover" />
@@ -115,7 +115,7 @@ export default function BanquetDetailsPage() {
                     <section>
                         <h2 className="text-xl font-semibold mb-4">Amenities</h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            {banquet.amenities.map((amenity: string) => (
+                            {banquet.amenities?.map((amenity: string) => (
                                 <div key={amenity} className="flex items-center gap-2">
                                     <Check className="h-4 w-4 text-primary" />
                                     <span>{amenity}</span>

@@ -19,15 +19,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
-import { toast } from "sonner";
-// import { useCreateBooking } from "@/hooks/useBookings"; // To be implemented
+import { useCreateBooking } from "@/hooks/useBookings";
 
 const bookingSchema = z.object({
     banquetId: z.string(),
-    eventDate: z.date({
-        required_error: "A date is required.",
-    }).refine((date) => date > new Date(), {
+    eventDate: z.date().refine((date) => date > new Date(), {
         message: "Event date must be in the future.",
     }),
     guestCount: z.coerce.number().min(1, "At least 1 guest is required"),
@@ -42,8 +38,7 @@ interface BookingFormProps {
 }
 
 export function BookingForm({ banquetId, onSuccess }: BookingFormProps) {
-    // const { mutate: createBooking, isPending } = useCreateBooking(); // Mock for now
-    const [isPending, setIsPending] = useState(false);
+    const { mutate: createBooking, isPending } = useCreateBooking();
 
     const form = useForm<BookingFormValues>({
         resolver: zodResolver(bookingSchema) as any,
@@ -55,22 +50,14 @@ export function BookingForm({ banquetId, onSuccess }: BookingFormProps) {
     });
 
     function onSubmit(values: BookingFormValues) {
-        setIsPending(true);
-        // Simulate API call
-        setTimeout(() => {
-            console.log("Booking Values:", values);
-            toast.success("Booking request sent successfully!");
-            setIsPending(false);
-            if (onSuccess) onSuccess();
-        }, 1000);
-
-        // Real implementation:
-        // createBooking(values, {
-        //     onSuccess: () => {
-        //         toast.success("Booking request sent successfully!");
-        //         if (onSuccess) onSuccess();
-        //     },
-        // });
+        createBooking({
+            ...values,
+            eventDate: values.eventDate.toISOString(),
+        }, {
+            onSuccess: () => {
+                if (onSuccess) onSuccess();
+            }
+        });
     }
 
     return (
