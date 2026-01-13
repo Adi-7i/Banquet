@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, Star, IndianRupee } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BanquetCard, BanquetProps } from "@/components/banquet-card";
@@ -48,7 +48,7 @@ async function fetchTrendingBanquets() {
             pricePerPlate: 800,
             rating: 4.2,
             amenities: ["Open Lawn", "Valet", "Decor"],
-            primaryImage: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc6?q=80&w=2069&auto=format&fit=crop"
+            primaryImage: "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg"
         }
     ] as BanquetProps[];
 }
@@ -73,7 +73,7 @@ export default function HomePage() {
             <section className="relative h-[600px] flex items-center justify-center bg-muted">
                 <div className="absolute inset-0 overflow-hidden">
                     <img
-                        src="https://images.unsplash.com/photo-1519225421980-715cb0202128?q=80&w=2000&auto=format&fit=crop"
+                        src="https://images.pexels.com/photos/271639/pexels-photo-271639.jpeg"
                         alt="Hero"
                         className="w-full h-full object-cover brightness-50"
                     />
