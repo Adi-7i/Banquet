@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -21,42 +21,15 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
-// Mock individual fetch
-async function fetchBanquetById(id: string) {
-    // const { data } = await api.get(`/banquets/${id}`);
-    // return data.data;
-
-    // Mock
-    return {
-        _id: id,
-        name: "Grand Palace Hotel",
-        description: "A luxurious venue perfect for weddings and corporate events. Features state-of-the-art facilities and exceptional service.",
-        address: "123 Main St",
-        city: "Mumbai",
-        capacity: 500,
-        pricePerPlate: 1200,
-        rating: 4.8,
-        reviewsCount: 124,
-        amenities: ["AC", "Parking", "Catering", "Decor", "Wifi", "Bridal Room"],
-        images: [
-            "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=2098&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1519225421980-715cb0202128?q=80&w=2098&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2070&auto=format&fit=crop"
-        ],
-        owner: {
-            name: "Luxury Hotels Group"
-        }
-    };
-}
+import { useBanquet } from "@/hooks/useBanquets";
+import { ReviewList } from "@/components/reviews/review-list";
+import { BookingForm } from "@/components/bookings/booking-form";
 
 export default function BanquetDetailsPage() {
     const params = useParams();
     const router = useRouter();
     const { isAuthenticated } = useAuth();
-    const { data: banquet, isLoading } = useQuery({
-        queryKey: ["banquet", params.id],
-        queryFn: () => fetchBanquetById(params.id as string),
-    });
+    const { data: banquet, isLoading } = useBanquet(params.id as string);
 
     const [date, setDate] = useState<Date | undefined>(new Date());
 
@@ -182,17 +155,10 @@ export default function BanquetDetailsPage() {
                                         <DialogTitle>Book {banquet.name}</DialogTitle>
                                     </DialogHeader>
                                     <div className="py-4">
-                                        <Calendar
-                                            mode="single"
-                                            selected={date}
-                                            onSelect={setDate}
-                                            className="rounded-md border mx-auto"
-                                        />
-                                        <div className="mt-4 text-center text-sm text-muted-foreground">
-                                            This is a demo. Backend integration required to check real slots.
-                                        </div>
+                                        <BookingForm banquetId={banquet._id} onSuccess={() => {
+                                            // Optional: Close dialog / redirect
+                                        }} />
                                     </div>
-                                    <Button className="w-full">Confirm Request</Button>
                                 </DialogContent>
                             </Dialog>
 

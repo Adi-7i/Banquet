@@ -17,13 +17,29 @@ export type LoginCredentials = {
     password: string;
 };
 
-export type RegisterData = {
+// Customer registration data
+export type CustomerRegisterData = {
     email: string;
     password: string;
-    role: "CUSTOMER" | "OWNER";
+    role: "CUSTOMER";
     firstName: string;
     lastName: string;
+    phoneNumber: string;
 };
+
+// Owner registration data
+export type OwnerRegisterData = {
+    email: string;
+    password: string;
+    role: "OWNER";
+    businessName: string;
+    contactNumber: string;
+};
+
+// Combined type for registration
+export type RegisterData = CustomerRegisterData | OwnerRegisterData;
+
+// --- API Functions ---
 
 // --- API Functions ---
 
@@ -33,19 +49,32 @@ async function loginUser(credentials: LoginCredentials) {
 }
 
 async function registerUser(userData: RegisterData) {
-    // Construct payload expected by backend
+    // Construct payload based on role
     const payload = {
         email: userData.email,
         password: userData.password,
         role: userData.role,
         // Add profile data structure as required by backend DTOs
-        [userData.role === "OWNER" ? "ownerProfile" : "customerProfile"]: {
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-        }
+        ...(userData.role === "OWNER" ? {
+            ownerProfile: {
+                businessName: (userData as OwnerRegisterData).businessName,
+                contactNumber: (userData as OwnerRegisterData).contactNumber,
+            }
+        } : {
+            customerProfile: {
+                firstName: (userData as CustomerRegisterData).firstName,
+                lastName: (userData as CustomerRegisterData).lastName,
+                phoneNumber: (userData as CustomerRegisterData).phoneNumber,
+            }
+        })
     };
     const { data } = await api.post("/auth/register", payload);
     return data;
+}
+
+async function verifyOtpUser(data: { identifier: string; otp: string; type: "EMAIL" | "PHONE" }) {
+    const { data: response } = await api.post("/auth/verify-otp", data);
+    return response;
 }
 
 async function fetchCurrentUser() {
@@ -64,12 +93,16 @@ export function useAuth() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    // Get current user
+    // Check if we have a token before attempting to fetch user
+    const hasToken = typeof window !== "undefined" && !!localStorage.getItem("accessToken");
+
+    // Get current user - only fetch if token exists
     const { data: user, isLoading: isLoadingUser, error: userError } = useQuery<User>({
         queryKey: ["currentUser"],
         queryFn: fetchCurrentUser,
         retry: false,
         staleTime: 5 * 60 * 1000, // 5 mins
+        enabled: hasToken, // Only fetch if we have a token
     });
 
     // Login Mutation
@@ -95,9 +128,18 @@ export function useAuth() {
     // Register Mutation
     const registerMutation = useMutation({
         mutationFn: registerUser,
-        onSuccess: () => {
-            router.push("/verify-otp"); // Or login directly if no OTP required immediately
+        onSuccess: (_, variables) => {
+            // Redirect to OTP page with email
+            router.push(`/verify-otp?email=${encodeURIComponent(variables.email)}`);
         },
+    });
+
+    // Verify OTP Mutation
+    const verifyOtpMutation = useMutation({
+        mutationFn: verifyOtpUser,
+        onSuccess: () => {
+            router.push("/login");
+        }
     });
 
     // Logout Mutation
@@ -120,6 +162,10 @@ export function useAuth() {
         register: registerMutation.mutate,
         isRegistering: registerMutation.isPending,
         registerError: registerMutation.error,
+        verifyOtp: verifyOtpMutation.mutate,
+        isVerifyingOtp: verifyOtpMutation.isPending,
+        verifyOtpError: verifyOtpMutation.error,
         logout: logoutMutation.mutate,
     };
 }
+

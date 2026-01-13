@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import { useAuth } from "@/hooks/useAuth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -25,12 +26,14 @@ const otpSchema = z.object({
     email: z.string().email().optional(), // Can be pre-filled or captured from previous step context
 });
 
-export default function VerifyOtpPage() {
+import { Suspense } from "react";
+
+function VerifyOtpForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const emailParam = searchParams.get("email");
 
-    const [isVerifying, setIsVerifying] = useState(false);
+    const { verifyOtp, isVerifyingOtp } = useAuth();
 
     const form = useForm<z.infer<typeof otpSchema>>({
         resolver: zodResolver(otpSchema),
@@ -40,31 +43,25 @@ export default function VerifyOtpPage() {
         },
     });
 
-    async function onSubmit(values: z.infer<typeof otpSchema>) {
-        setIsVerifying(true);
-        try {
-            // Need identifier (email) to verify. If not in URL, might need user to enter it?
-            // Basic flow: Register -> Redirect to verify?email=...
-            const identifier = values.email || emailParam;
-            if (!identifier) {
-                toast.error("Email identifier missing");
-                return;
-            }
-
-            await api.post("/auth/verify-otp", {
-                identifier: identifier,
-                otp: values.otp,
-                type: "email"
-            });
-
-            toast.success("Verification successful! Please login.");
-            router.push("/login");
-
-        } catch (error: any) {
-            toast.error(error?.formattedMessage || "Invalid OTP");
-        } finally {
-            setIsVerifying(false);
+    function onSubmit(values: z.infer<typeof otpSchema>) {
+        const identifier = values.email || emailParam;
+        if (!identifier) {
+            toast.error("Email identifier missing");
+            return;
         }
+
+        verifyOtp(
+            { identifier, otp: values.otp, type: "EMAIL" },
+            {
+                onSuccess: () => {
+                    toast.success("Verification successful! Please login.");
+                    // Redirect handled in hook
+                },
+                onError: (error: any) => {
+                    toast.error(error?.formattedMessage || "Invalid OTP");
+                }
+            }
+        );
     }
 
     return (
@@ -108,12 +105,20 @@ export default function VerifyOtpPage() {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" className="w-full" disabled={isVerifying}>
-                            {isVerifying ? "Verifying..." : "Verify OTP"}
+                        <Button type="submit" className="w-full" disabled={isVerifyingOtp}>
+                            {isVerifyingOtp ? "Verifying..." : "Verify OTP"}
                         </Button>
                     </form>
                 </Form>
             </CardContent>
         </Card>
+    );
+}
+
+export default function VerifyOtpPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <VerifyOtpForm />
+        </Suspense>
     );
 }

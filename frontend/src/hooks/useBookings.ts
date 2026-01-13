@@ -32,6 +32,13 @@ async function fetchMyBookings() {
             eventDate: "2025-01-10",
             status: "PENDING",
             totalAmount: 50000
+        },
+        {
+            _id: "b3",
+            banquet: { _id: "3", name: "Mountain Retreat", primaryImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=2070&auto=format&fit=crop" },
+            eventDate: "2023-11-20",
+            status: "COMPLETED",
+            totalAmount: 75000
         }
     ] as Booking[];
 }

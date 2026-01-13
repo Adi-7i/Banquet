@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { ReviewDialog } from "@/components/reviews/review-dialog";
+import { Button } from "@/components/ui/button";
 
 export default function BookingsPage() {
     const { data: bookings, isLoading } = useBookings();
@@ -36,7 +38,10 @@ export default function BookingsPage() {
                                 <CardTitle className="text-base font-semibold">
                                     {booking.banquet.name}
                                 </CardTitle>
-                                <Badge variant={booking.status === "CONFIRMED" ? "default" : "secondary"}>
+                                <Badge variant={
+                                    booking.status === "CONFIRMED" ? "default" :
+                                        booking.status === "COMPLETED" ? "outline" : "secondary"
+                                }>
                                     {booking.status}
                                 </Badge>
                             </CardHeader>
@@ -44,8 +49,17 @@ export default function BookingsPage() {
                                 <div className="text-sm text-muted-foreground mb-2">
                                     Event Date: {format(new Date(booking.eventDate), "MMMM d, yyyy")}
                                 </div>
-                                <div className="text-sm font-medium">
-                                    Amount: ₹{booking.totalAmount.toLocaleString()}
+                                <div className="flex items-center justify-between">
+                                    <div className="text-sm font-medium">
+                                        Amount: ₹{booking.totalAmount.toLocaleString()}
+                                    </div>
+                                    {booking.status === "COMPLETED" && (
+                                        <ReviewDialog
+                                            banquetId={booking.banquet._id}
+                                            banquetName={booking.banquet.name}
+                                            trigger={<Button size="sm" variant="outline">Write Review</Button>}
+                                        />
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

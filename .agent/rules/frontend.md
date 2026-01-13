@@ -53,11 +53,6 @@ square-ui website: [https://square.lndev.me/]
 - Debounce search inputs (>= 300ms).
 
 ## Forms
-- Use RHF + Zod; validate:
-  - check_out > check_in
-  - check_in not in past
-  - num_rooms >= 1
-  - amount_paid >= 0
 - Disable submit while submitting; show inline errors; show toast on success/failure.
 
 ## TypeScript rules
@@ -69,4 +64,3 @@ square-ui website: [https://square.lndev.me/]
 - Hardcoding API URLs.
 - Inline CSS (except tiny dynamic style needs).
 - Fetching data in server components that depends on browser-only auth storage.
-

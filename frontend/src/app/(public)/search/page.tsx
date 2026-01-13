@@ -92,7 +92,9 @@ async function searchBanquets(params: any) {
     };
 }
 
-export default function SearchPage() {
+import { Suspense } from "react";
+
+function SearchPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -244,5 +246,13 @@ export default function SearchPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function SearchPage() {
+    return (
+        <Suspense fallback={<div>Loading results...</div>}>
+            <SearchPageContent />
+        </Suspense>
     );
 }
