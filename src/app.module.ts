@@ -13,6 +13,7 @@ import { SearchModule } from '@modules/search/search.module';
 import { BookingsModule } from '@modules/bookings/bookings.module';
 import { ReviewsModule } from '@modules/reviews/reviews.module';
 import { AdminModule } from '@modules/admin/admin.module';
+import { AnalyticsModule } from '@modules/analytics/analytics.module';
 import { RedisModule } from '@infrastructure/cache/redis.module';
 // QueueModule removed - requires Redis. Uncomment when Redis is available:
 // import { QueueModule } from '@infrastructure/queues/queue.module';
@@ -54,6 +55,7 @@ import { ConfigService } from '@nestjs/config';
         BookingsModule,
         ReviewsModule,
         AdminModule,
+        AnalyticsModule,
     ],
 })
 export class AppModule implements NestModule {
