@@ -24,35 +24,48 @@ export class SearchRepository {
         // Build aggregation pipeline
         const pipeline: any[] = [];
 
-        // Stage 1: Match published and non-deleted banquets
-        const matchStage: any = {
+        // Stage 1: Base match for published and non-deleted banquets
+        const baseMatch: any = {
             status: BanquetStatus.PUBLISHED,
             deletedAt: null,
         };
 
-        // Text search
+        // Text search handling
+        // Note: $text must be first stage, but so must $geoNear
+        // When using geoNear, we use regex instead of $text for compatibility
+        const hasGeoSearch = criteria.latitude && criteria.longitude && criteria.radiusKm;
+
         if (criteria.text) {
-            matchStage.$text = { $search: criteria.text };
+            if (hasGeoSearch) {
+                // Use regex search when combining with geo (applied in geoNear query)
+                baseMatch.$or = [
+                    { name: { $regex: criteria.text, $options: 'i' } },
+                    { description: { $regex: criteria.text, $options: 'i' } },
+                ];
+            } else {
+                // Use full-text search when NOT using geoNear
+                baseMatch.$text = { $search: criteria.text };
+            }
         }
 
         // City filter
         if (criteria.city) {
-            matchStage.city = { $regex: criteria.city, $options: 'i' };
+            baseMatch.city = { $regex: criteria.city, $options: 'i' };
         }
 
         // Capacity range
         if (criteria.minCapacity !== undefined || criteria.maxCapacity !== undefined) {
-            matchStage.capacity = {};
-            if (criteria.minCapacity) matchStage.capacity.$gte = criteria.minCapacity;
-            if (criteria.maxCapacity) matchStage.capacity.$lte = criteria.maxCapacity;
+            baseMatch.capacity = {};
+            if (criteria.minCapacity) baseMatch.capacity.$gte = criteria.minCapacity;
+            if (criteria.maxCapacity) baseMatch.capacity.$lte = criteria.maxCapacity;
         }
 
         // Price range (assumes pricing.perPlate exists)
         if (criteria.minPrice !== undefined || criteria.maxPrice !== undefined) {
-            if (criteria.minPrice) matchStage['pricing.perPlate'] = { $gte: criteria.minPrice };
+            if (criteria.minPrice) baseMatch['pricing.perPlate'] = { $gte: criteria.minPrice };
             if (criteria.maxPrice) {
-                matchStage['pricing.perPlate'] = matchStage['pricing.perPlate'] || {};
-                matchStage['pricing.perPlate'].$lte = criteria.maxPrice;
+                baseMatch['pricing.perPlate'] = baseMatch['pricing.perPlate'] || {};
+                baseMatch['pricing.perPlate'].$lte = criteria.maxPrice;
             }
         }
 
@@ -60,31 +73,36 @@ export class SearchRepository {
         if (criteria.amenities && criteria.amenities.length > 0) {
             // Check if all amenities are present and truthy
             criteria.amenities.forEach(amenity => {
-                matchStage[`amenities.${amenity}`] = true;
+                baseMatch[`amenities.${amenity}`] = true;
             });
         }
 
-        // Geospatial search
-        if (criteria.latitude && criteria.longitude && criteria.radiusKm) {
-            // Note: This requires latitude/longitude fields and 2dsphere index
-            // For now using radians calculation
+        // Rating filter
+        if (criteria.minRating) {
+            baseMatch.rating = { $gte: criteria.minRating };
+        }
+
+        // Geospatial search - $geoNear MUST be first stage if used
+        if (hasGeoSearch) {
+            // Use $geoNear with all filters (including regex text search)
             pipeline.push({
                 $geoNear: {
                     near: {
                         type: 'Point',
-                        coordinates: [criteria.longitude, criteria.latitude],
+                        coordinates: [criteria.longitude!, criteria.latitude!],
                     },
                     distanceField: 'distance',
-                    maxDistance: criteria.radiusKm * 1000, // Convert km to meters
+                    maxDistance: criteria.radiusKm! * 1000, // Convert km to meters
                     spherical: true,
-                    query: matchStage,
+                    query: baseMatch, // All filters including text as regex
                 },
             });
         } else {
-            pipeline.push({ $match: matchStage });
+            // No geospatial search - use regular $match
+            pipeline.push({ $match: baseMatch });
         }
 
-        // Add distance calculation if geospatial search
+        // Add distance calculation if coordinates provided but no radius
         if (criteria.latitude && criteria.longitude && !criteria.radiusKm) {
             pipeline.push({
                 $addFields: {
