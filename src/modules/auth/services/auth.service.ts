@@ -73,10 +73,13 @@ export class AuthService {
             );
         }
 
-        // Create user without password hash
+        // Hash password before storing
+        const hashedPassword = await this.passwordService.hashPassword(password);
+
+        // Create user with hashed password
         const user = await this.userModel.create({
             email,
-            password, // Store password as-is, no hashing
+            password: hashedPassword,
             role,
             status: UserStatus.ACTIVE,
         });
@@ -141,8 +144,8 @@ export class AuthService {
             );
         }
 
-        // Verify password (direct comparison, no hashing)
-        const isPasswordValid = password === user.password;
+        // Verify password using bcrypt
+        const isPasswordValid = await this.passwordService.verifyPassword(password, user.password);
 
         if (!isPasswordValid) {
             // Record failed attempt
