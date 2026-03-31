@@ -461,7 +461,7 @@ This codebase is built on seven non-negotiable engineering principles:
 </p>
 
 <p align="center">
-  <h2 align="center">Lucifer</h2>
+  <h2 align="center">Cynerza Team</h2>
 </p>
 
 <p align="center">

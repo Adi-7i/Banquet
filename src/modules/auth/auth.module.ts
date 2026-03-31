@@ -10,6 +10,7 @@ import { TokenService } from './services/token.service';
 import { OtpService } from './services/otp.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from './guards/optional-jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { PermissionsGuard } from './guards/permissions.guard';
 
@@ -39,6 +40,7 @@ import { PermissionsGuard } from './guards/permissions.guard';
         OtpService,
         JwtStrategy,
         JwtAuthGuard,
+        OptionalJwtAuthGuard,
         RolesGuard,
         PermissionsGuard,
     ],
@@ -47,6 +49,7 @@ import { PermissionsGuard } from './guards/permissions.guard';
         PasswordService,
         TokenService,
         JwtAuthGuard,
+        OptionalJwtAuthGuard,
         RolesGuard,
         PermissionsGuard,
     ],

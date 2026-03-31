@@ -124,7 +124,6 @@ export class SearchBanquetDto extends PaginationQueryDto {
     @IsOptional()
     @IsArray()
     @IsString({ each: true })
-    @ArrayMinSize(1)
     amenities?: string[];
 
     @ApiPropertyOptional({

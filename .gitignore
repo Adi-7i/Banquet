@@ -60,3 +60,6 @@ temp/
 
 # Build files
 *.tsbuildinfo
+
+# personal files
+test_cred.md

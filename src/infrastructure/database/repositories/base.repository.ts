@@ -1,5 +1,5 @@
-import { Document, FilterQuery, Model, QueryOptions, UpdateQuery } from 'mongoose';
-import { Logger } from '@nestjs/common';
+import { Document, FilterQuery, Model, QueryOptions, UpdateQuery, Types } from 'mongoose';
+import { Logger, BadRequestException } from '@nestjs/common';
 
 /**
  * Base document interface with audit and soft delete fields
@@ -53,6 +53,12 @@ export abstract class BaseRepository<T extends Document & SoftDeletableDocument>
      * Find by ID (excludes soft-deleted by default)
      */
     async findById(id: string, includeDeleted = false): Promise<T | null> {
+        // Validate ObjectId format to prevent 500 errors
+        if (!Types.ObjectId.isValid(id)) {
+            this.logger.warn(`Invalid ObjectId format: ${id}`);
+            return null; // Return null instead of throwing, let service handle 404
+        }
+
         const filter: FilterQuery<T> = { _id: id } as FilterQuery<T>;
 
         if (!includeDeleted) {

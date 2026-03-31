@@ -23,6 +23,7 @@ import { RolesGuard } from '@modules/auth/guards/roles.guard';
 import { Roles } from '@modules/auth/decorators/roles.decorator';
 import { CurrentUser } from '@modules/auth/decorators/current-user.decorator';
 import { Public } from '@modules/auth/decorators/public.decorator';
+import { OptionalAuth } from '@modules/auth/decorators/optional-auth.decorator';
 import { UserRole } from '@infrastructure/database/schemas/user.schema';
 import { BanquetStatus } from '@infrastructure/database/schemas/banquet.schema';
 
@@ -91,7 +92,7 @@ export class BanquetsController {
      * Get banquet by ID (public if published, owner can see own drafts)
      */
     @Get(':id')
-    @Public()
+    @OptionalAuth()
     @ApiOperation({ summary: 'Get banquet by ID' })
     @ApiResponse({
         status: 200,
